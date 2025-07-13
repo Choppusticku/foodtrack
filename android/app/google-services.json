@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "829665890317",
+    "project_id": "finalyearproject-e6b08",
+    "storage_bucket": "finalyearproject-e6b08.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829665890317:android:7c2d8edfa5f86a51edc544",
+        "android_client_info": {
+          "package_name": "com.example.food_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmKF6hERquybeqnIjbq1eUT4ADZE8r_m8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829665890317:android:dd6477bc41b9bfbdedc544",
+        "android_client_info": {
+          "package_name": "com.example.foodtrack"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmKF6hERquybeqnIjbq1eUT4ADZE8r_m8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
