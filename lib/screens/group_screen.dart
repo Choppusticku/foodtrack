@@ -63,7 +63,7 @@ class _GroupScreenState extends State<GroupScreen> {
       loading = false;
     });
   }
-
+  //test
   Future<void> _switchGroup(String newId) async {
     await groupService.switchGroup(newId);
     await _initData();
