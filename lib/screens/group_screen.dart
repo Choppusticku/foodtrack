@@ -68,7 +68,7 @@ class _GroupScreenState extends State<GroupScreen> {
     await groupService.switchGroup(newId);
     await _initData();
   }
-
+  //remove this comment
   Future<void> _approveRequest(String uid) async {
     if (currentGroupId == null) return;
     await groupService.approveJoinRequest(currentGroupId!, uid);
