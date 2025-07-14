@@ -11,6 +11,7 @@ import 'package:foodtrack/viewmodels/profile_viewmodel.dart';
 import 'package:foodtrack/viewmodels/recipe_viewmodel.dart';
 import 'package:provider/provider.dart';
 
+import 'theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/group/group_screen.dart';
@@ -46,7 +47,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'ShelfSync',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(primarySwatch: Colors.green),
+        theme: AppTheme.lightTheme,
         routes: {
           '/home': (context) => const HomeScreen(),
           '/login': (context) => const LoginScreen(),
@@ -57,7 +58,12 @@ class MyApp extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                backgroundColor: AppTheme.backgroundColor,
+                body: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                  ),
+                ),
               );
             } else if (snapshot.hasData) {
               return const HomeScreen();

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:foodtrack/theme/app_theme.dart';
 import 'package:foodtrack/screens/calendar/calendar_screen.dart';
 import 'package:foodtrack/screens/group/group_screen.dart';
 import 'package:foodtrack/screens/inventory/inventory_screen.dart';
@@ -86,17 +87,26 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) {
         return Dialog(
-          insetPadding: const EdgeInsets.all(16),
+          backgroundColor: AppTheme.surfaceColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          insetPadding: const EdgeInsets.all(24),
           child: Container(
-            height: 400,
-            padding: const EdgeInsets.all(16),
+            height: 500,
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Recent Notifications", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(
+                      "Notifications",
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () async {
                         final snapshot = await FirebaseFirestore.instance
@@ -112,14 +122,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("All marked as read")),
+                          SnackBar(
+                            content: const Text("All marked as read"),
+                            backgroundColor: AppTheme.successColor,
+                          ),
                         );
                       },
-                      child: const Text("Mark all as read"),
+                      child: Text(
+                        "Mark all read",
+                        style: TextStyle(color: AppTheme.primaryColor),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 8),
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
@@ -130,14 +147,43 @@ class _HomeScreenState extends State<HomeScreen> {
                         .limit(10)
                         .snapshots(),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                      if (!snapshot.hasData) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                          ),
+                        );
+                      }
 
                       final docs = snapshot.data!.docs;
-                      if (docs.isEmpty) return const Center(child: Text("No notifications."));
+                      if (docs.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.notifications_none,
+                                size: 48,
+                                color: AppTheme.textHint,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "No notifications yet",
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
 
                       return ListView.separated(
                         itemCount: docs.length,
-                        separatorBuilder: (context, index) => const Divider(),
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          color: AppTheme.dividerColor,
+                        ),
                         itemBuilder: (context, index) {
                           final data = docs[index].data() as Map<String, dynamic>;
                           final groupId = data['groupId'];
@@ -157,14 +203,57 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ? groupSnap.data ?? 'Unknown Group'
                                   : 'Loading group...';
 
-                              return ListTile(
-                                leading: Icon(Icons.notifications,
-                                    color: isRead ? Colors.grey : Colors.orange),
-                                title: Text(message),
-                                subtitle: Text("Group: $groupName\n$timeLabel"),
-                                isThreeLine: true,
-                                tileColor: isRead ? Colors.grey[100] : null,
-                                onTap: () => docs[index].reference.update({'isRead': true}),
+                              return Container(
+                                color: isRead ? null : AppTheme.primaryColor.withOpacity(0.05),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  leading: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: isRead 
+                                          ? AppTheme.textHint.withOpacity(0.1)
+                                          : AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Icon(
+                                      Icons.notifications,
+                                      color: isRead ? AppTheme.textHint : AppTheme.primaryColor,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    message,
+                                    style: TextStyle(
+                                      fontWeight: isRead ? FontWeight.normal : FontWeight.w600,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Group: $groupName",
+                                        style: TextStyle(
+                                          color: AppTheme.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Text(
+                                        timeLabel,
+                                        style: TextStyle(
+                                          color: AppTheme.textHint,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  onTap: () => docs[index].reference.update({'isRead': true}),
+                                ),
                               );
                             },
                           );
@@ -198,6 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
               width: MediaQuery.of(context).size.width * 0.7,
               child: const Material(
                 elevation: 12,
+                color: AppTheme.surfaceColor,
                 child: ProfileScreen(),
               ),
             ),
@@ -212,13 +302,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: Text(_titles[_currentIndex]),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           Stack(
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications),
+                icon: const Icon(Icons.notifications_outlined),
                 onPressed: () => _showNotificationDialog(context),
               ),
               if (_unreadCount > 0)
@@ -228,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
-                      color: Colors.red,
+                      color: AppTheme.errorColor,
                       shape: BoxShape.circle,
                     ),
                     constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
@@ -248,14 +342,15 @@ class _HomeScreenState extends State<HomeScreen> {
           GestureDetector(
             onTap: () => _openProfilePanel(context),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.only(right: 16, left: 8),
               child: CircleAvatar(
-                radius: 16,
+                radius: 18,
+                backgroundColor: Colors.white.withOpacity(0.2),
                 backgroundImage: (avatarFile != null && avatarFile!.isNotEmpty)
                     ? AssetImage('assets/avatars/$avatarFile') as ImageProvider
                     : null,
                 child: (avatarFile == null || avatarFile!.isEmpty)
-                    ? const Icon(Icons.person, size: 16)
+                    ? const Icon(Icons.person, size: 20, color: Colors.white)
                     : null,
               ),
             ),
@@ -263,15 +358,56 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       drawer: Drawer(
+        backgroundColor: AppTheme.surfaceColor,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.green),
-              child: Text("ShelfSync Menu", style: TextStyle(color: Colors.white, fontSize: 24)),
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppTheme.primaryColor, AppTheme.primaryLight],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.restaurant,
+                      size: 30,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "ShelfSync",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Text(
+                    "Smart Food Tracking",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
             ListTile(
-              leading: const Icon(Icons.analytics), // ✅ New Analytics Option
+              leading: Icon(Icons.analytics_outlined, color: AppTheme.primaryColor),
               title: const Text("Analytics"),
               onTap: () {
                 Navigator.pop(context);
@@ -282,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.notifications),
+              leading: Icon(Icons.notifications_outlined, color: AppTheme.primaryColor),
               title: const Text("Notifications"),
               onTap: () {
                 Navigator.pop(context);
@@ -290,16 +426,18 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.person),
+              leading: Icon(Icons.person_outline, color: AppTheme.primaryColor),
               title: const Text("Profile"),
               onTap: () {
                 Navigator.pop(context);
                 _openProfilePanel(context);
               },
             ),
+            const Divider(),
             ListTile(
-              leading: const Icon(Icons.logout),
+              leading: Icon(Icons.logout, color: AppTheme.errorColor),
               title: const Text("Logout"),
+              textColor: AppTheme.errorColor,
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
                 if (context.mounted) {
@@ -314,21 +452,43 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
-        selectedItemColor: Colors.green,
-        unselectedItemColor: Colors.grey,
+        backgroundColor: AppTheme.surfaceColor,
+        selectedItemColor: AppTheme.primaryColor,
+        unselectedItemColor: AppTheme.textSecondary,
+        elevation: 8,
         onTap: (index) => setState(() => _currentIndex = index),
         items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: "Calendar"),
-          const BottomNavigationBarItem(icon: Icon(Icons.groups), label: "Group"),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today_outlined),
+            activeIcon: Icon(Icons.calendar_today),
+            label: "Calendar",
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.groups_outlined),
+            activeIcon: Icon(Icons.groups),
+            label: "Group",
+          ),
           BottomNavigationBarItem(
             icon: Container(
-              margin: const EdgeInsets.only(top: 2),
-              child: Icon(Icons.add_circle, size: 50, color: Colors.green.shade700),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.add, size: 28, color: Colors.white),
             ),
             label: "",
           ),
-          const BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Inventory"),
-          const BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: "Recipes"),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2_outlined),
+            activeIcon: Icon(Icons.inventory_2),
+            label: "Inventory",
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long_outlined),
+            activeIcon: Icon(Icons.receipt_long),
+            label: "Recipes",
+          ),
         ],
       ),
     );
