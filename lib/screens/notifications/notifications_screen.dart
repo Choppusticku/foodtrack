@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/notifications_viewmodel.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -21,7 +21,7 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final vm = context.watch<NotificationsViewModel>();
 
     return Scaffold(
       appBar: AppBar(
@@ -29,18 +29,12 @@ class NotificationsScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.deepOrange,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notifications')
-            .doc(uid)
-            .collection('items')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
+      body: StreamBuilder(
+        stream: vm.notificationStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-          final notifications = snapshot.data!.docs;
-
+          final notifications = snapshot.data!;
           if (notifications.isEmpty) {
             return const Center(
               child: Text(
@@ -52,19 +46,12 @@ class NotificationsScreen extends StatelessWidget {
 
           return ListView.separated(
             itemCount: notifications.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
-              final doc = notifications[index];
-              final data = doc.data() as Map<String, dynamic>;
-              final timestamp = (data['timestamp'] as Timestamp).toDate();
-              final formattedTime = DateFormat('dd MMM yyyy, hh:mm a').format(timestamp);
-              final isUnread = data['isRead'] == false;
-              final message = data['message'] ?? "Unknown message";
-              final type = data['type'] ?? 'info';
-              final groupId = data['groupId'] ?? 'Unknown';
-
+              final notif = notifications[index];
+              final formattedTime = DateFormat('dd MMM yyyy, hh:mm a').format(notif.timestamp);
               return Dismissible(
-                key: Key(doc.id),
+                key: Key(notif.id),
                 direction: DismissDirection.endToStart,
                 background: Container(
                   alignment: Alignment.centerRight,
@@ -72,23 +59,23 @@ class NotificationsScreen extends StatelessWidget {
                   color: Colors.red,
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                onDismissed: (_) => doc.reference.delete(),
+                onDismissed: (_) => vm.deleteNotification(notif.id),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  leading: _getIcon(type),
+                  leading: _getIcon(notif.type),
                   title: Text(
-                    message,
+                    notif.message,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Group: $groupId"),
+                      Text("Group: ${notif.groupId}"),
                       Text(formattedTime),
                     ],
                   ),
-                  tileColor: isUnread ? Colors.orange.shade50 : null,
-                  onTap: () => doc.reference.update({'isRead': true}),
+                  tileColor: !notif.isRead ? Colors.orange.shade50 : null,
+                  onTap: () => vm.markAsRead(notif.id),
                 ),
               );
             },
