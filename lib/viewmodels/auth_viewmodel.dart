@@ -20,9 +20,12 @@ class AuthViewModel extends ChangeNotifier {
       );
       final user = userCred.user!;
 
-      if (!user.emailVerified) {
+      final email = emailCtrl.text.trim();
+      final isGmail = email.endsWith('@gmail.com');
+
+      if (isGmail && !user.emailVerified) {
         await FirebaseAuth.instance.signOut();
-        error = "Please verify your email before logging in.";
+        error = "Please verify your Gmail before logging in.";
       } else {
         if (context.mounted) {
           Navigator.pushReplacementNamed(context, '/home');
@@ -45,14 +48,18 @@ class AuthViewModel extends ChangeNotifier {
         email: emailCtrl.text.trim(),
         password: passCtrl.text,
       );
+
       final user = userCred.user!;
       final uid = user.uid;
 
-      await user.sendEmailVerification();
+      final email = emailCtrl.text.trim();
+      final isGmail = email.endsWith('@gmail.com');
+
+      if (isGmail) await user.sendEmailVerification();
 
       await firestore.collection('users').doc(uid).set({
         'uid': uid,
-        'email': emailCtrl.text.trim(),
+        'email': email,
         'displayName': nameCtrl.text.trim(),
         'role': role,
         'groupId': null,
@@ -64,7 +71,11 @@ class AuthViewModel extends ChangeNotifier {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Verification email sent. Please verify before logging in.")),
+          SnackBar(
+            content: Text(isGmail
+                ? "Verification email sent. Please verify before logging in."
+                : "Registration complete."),
+          ),
         );
         Navigator.pop(context);
       }

@@ -58,7 +58,7 @@ class GroupService {
     });
   }
 
-  // ✅ 🔧 FIXED: Get groups properly for both owners and members
+  // ✅ Get groups properly for both owners and members
   Future<List<Map<String, dynamic>>> getUserGroups() async {
     final userDoc = await usersRef.doc(uid).get();
     final userData = userDoc.data();
@@ -67,7 +67,8 @@ class GroupService {
     final role = userData['role'] ?? 'Member';
 
     if (role == 'Owner') {
-      final ownerGroups = await groupsRef.where('ownerId', isEqualTo: uid).get();
+      final ownerGroups =
+      await groupsRef.where('ownerId', isEqualTo: uid).get();
 
       return ownerGroups.docs.map((doc) {
         final data = doc.data();
@@ -125,8 +126,11 @@ class GroupService {
     final userData = userDoc.data();
     final currentGroupId = userData?['currentGroupId'];
 
-    await usersRef.doc(targetUid).update({'groups': userGroups,
-      if (currentGroupId == null) 'currentGroupId': groupId,});
+    await usersRef.doc(targetUid).update({
+      'groups': userGroups,
+      if (currentGroupId == null) 'currentGroupId': groupId,
+    });
+
     await groupsRef
         .doc(groupId)
         .collection('joinRequests')
@@ -149,8 +153,7 @@ class GroupService {
       await usersRef.doc(userDoc.id).update({
         'groups': updatedGroups,
         if ((userData['currentGroupId'] ?? '') == groupId)
-          'currentGroupId':
-          updatedGroups.isNotEmpty ? updatedGroups[0]['id'] : null,
+          'currentGroupId': updatedGroups.isNotEmpty ? updatedGroups[0]['id'] : null,
       });
     }
 
@@ -159,5 +162,23 @@ class GroupService {
     for (final req in joinReqs.docs) {
       await req.reference.delete();
     }
+  }
+
+  // ✅ Leave group (members only)
+  Future<void> leaveGroup(String groupId) async {
+    final userDoc = await usersRef.doc(uid).get();
+    final userData = userDoc.data();
+    if (userData == null) return;
+
+    final List<dynamic> groupList = List.from(userData['groups'] ?? []);
+    groupList.removeWhere((g) => g['id'] == groupId);
+
+    final currentGroupId = userData['currentGroupId'];
+
+    await usersRef.doc(uid).update({
+      'groups': groupList,
+      if (currentGroupId == groupId)
+        'currentGroupId': groupList.isNotEmpty ? groupList[0]['id'] : null,
+    });
   }
 }

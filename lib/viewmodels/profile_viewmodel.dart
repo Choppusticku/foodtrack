@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ProfileViewModel extends ChangeNotifier {
-  final nameCtrl = TextEditingController();
+  TextEditingController? nameCtrl;
   String email = '';
   String avatarFile = '';
   bool loading = true;
@@ -11,11 +11,15 @@ class ProfileViewModel extends ChangeNotifier {
   final uid = FirebaseAuth.instance.currentUser!.uid;
 
   Future<void> init() async {
+    if (nameCtrl == null) {
+      nameCtrl = TextEditingController();
+    }
+
     final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
 
     if (data != null) {
-      nameCtrl.text = data['displayName'] ?? '';
+      nameCtrl!.text = data['displayName'] ?? '';
       email = data['email'] ?? '';
       avatarFile = data['avatar'] ?? '';
     }
@@ -27,7 +31,7 @@ class ProfileViewModel extends ChangeNotifier {
   String? get avatarPath => avatarFile.isNotEmpty ? 'assets/avatars/$avatarFile' : null;
 
   Future<void> updateName(BuildContext context) async {
-    final newName = nameCtrl.text.trim();
+    final newName = nameCtrl!.text.trim();
     if (newName.isEmpty) return;
 
     await FirebaseFirestore.instance.collection('users').doc(uid).update({'displayName': newName});
@@ -52,6 +56,7 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   void disposeControllers() {
-    nameCtrl.dispose();
+    nameCtrl?.dispose();
+    nameCtrl = null;
   }
 }

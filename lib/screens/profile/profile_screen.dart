@@ -21,7 +21,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
-    vm.disposeControllers();
+    // ✅ FIX: Do NOT dispose viewmodel controller manually here.
+    // It might still be used if the viewmodel is not recreated.
     super.dispose();
   }
 
@@ -111,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: vm.nameCtrl,
+                  controller: vm.nameCtrl!,
                   decoration: const InputDecoration(labelText: "Name"),
                 ),
                 const SizedBox(height: 12),

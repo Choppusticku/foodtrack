@@ -123,4 +123,29 @@ class GroupViewModel extends ChangeNotifier {
           .showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
+
+  // ✅ Leave current group (for members only)
+  Future<void> leaveCurrentGroup(BuildContext context) async {
+    if (currentGroupId == null || role == 'Owner') return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Leave Group"),
+        content: const Text("Are you sure you want to leave this group?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Leave")),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _groupService.leaveGroup(currentGroupId!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You have left the group")),
+      );
+      await loadUserGroups();
+    }
+  }
 }

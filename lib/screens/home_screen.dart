@@ -7,7 +7,7 @@ import 'package:foodtrack/screens/calendar/calendar_screen.dart';
 import 'package:foodtrack/screens/group/group_screen.dart';
 import 'package:foodtrack/screens/inventory/inventory_screen.dart';
 import 'package:foodtrack/screens/inventory/add_item_screen.dart';
-import 'package:foodtrack/profile/profile_screen.dart';
+import 'package:foodtrack/screens/profile/profile_screen.dart';
 import 'package:foodtrack/screens/recipe/recipe_generator_screen.dart';
 import 'package:foodtrack/screens/analytics/analytics_screen.dart';
 

@@ -49,8 +49,10 @@ class GroupScreen extends StatelessWidget {
           children: [
             DropdownButtonFormField<String>(
               value: vm.currentGroupId,
-              decoration: const InputDecoration(labelText: "Switch Group"),
-              items: vm.userGroups.map<DropdownMenuItem<String>>((group) {
+              decoration:
+              const InputDecoration(labelText: "Switch Group"),
+              items:
+              vm.userGroups.map<DropdownMenuItem<String>>((group) {
                 return DropdownMenuItem<String>(
                   value: group['id'] as String,
                   child: Text(group['name'] +
@@ -63,7 +65,7 @@ class GroupScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Group Info
+            /// Group Info Box
             FutureBuilder<DocumentSnapshot>(
               future: FirebaseFirestore.instance
                   .collection('groups')
@@ -78,14 +80,19 @@ class GroupScreen extends StatelessWidget {
                 }
 
                 final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
-                  child: ListTile(
-                    title: Text(data['name'] ?? 'Unnamed Group'),
-                    subtitle: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(data['name'] ?? 'Unnamed Group',
+                            style: Theme.of(context).textTheme.titleMedium),
+                        const SizedBox(height: 8),
                         Text(data['description'] ?? 'No description'),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Text("ID: ${vm.currentGroupId}",
@@ -97,12 +104,23 @@ class GroupScreen extends StatelessWidget {
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(
                                     text: vm.currentGroupId ?? ""));
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                    content: Text(
-                                        "Group ID copied to clipboard")));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          "Group ID copied to clipboard")),
+                                );
                               },
                             ),
+                            const Spacer(),
+
+                            // ✅ Leave Group Button (only for Members)
+                            if (vm.role == 'Member')
+                              TextButton.icon(
+                                onPressed: () => vm.leaveCurrentGroup(context),
+                                icon: const Icon(Icons.logout, color: Colors.red),
+                                label: const Text("Leave Group",
+                                    style: TextStyle(color: Colors.red)),
+                              ),
                           ],
                         ),
                       ],
@@ -112,6 +130,7 @@ class GroupScreen extends StatelessWidget {
               },
             ),
 
+            // Owner-only controls
             if (vm.role == 'Owner') ...[
               ElevatedButton.icon(
                 onPressed: () => vm.deleteCurrentGroup(context),
@@ -130,8 +149,7 @@ class GroupScreen extends StatelessWidget {
                     .collection('join_requests')
                     .doc(vm.currentGroupId)
                     .get()
-                    .then((doc) =>
-                List<Map<String, dynamic>>.from(doc['requests'] ?? [])),
+                    .then((doc) => List<Map<String, dynamic>>.from(doc['requests'] ?? [])),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Text("Loading requests...");
@@ -152,9 +170,9 @@ class GroupScreen extends StatelessWidget {
                           if (!snapshot.hasData) {
                             return const SizedBox.shrink();
                           }
-                          final userData =
-                              snapshot.data!.data() as Map<String, dynamic>? ??
-                                  {};
+                          final userData = snapshot.data!.data()
+                          as Map<String, dynamic>? ??
+                              {};
                           final displayName = userData['displayName'] ??
                               userData['email'] ??
                               requesterUid;
@@ -163,7 +181,8 @@ class GroupScreen extends StatelessWidget {
                           return ListTile(
                             leading: CircleAvatar(
                               backgroundImage: avatar.isNotEmpty
-                                  ? AssetImage('assets/avatars/$avatar')
+                                  ? AssetImage(
+                                  'assets/avatars/$avatar')
                               as ImageProvider
                                   : const AssetImage(
                                   'assets/avatars/blank.jpg'),
@@ -201,8 +220,8 @@ class GroupScreen extends StatelessWidget {
                   doc.data() as Map<String, dynamic>;
                   final groups = List<Map<String, dynamic>>.from(
                       userData['groups'] ?? []);
-                  return groups
-                      .any((g) => g['id'] == vm.currentGroupId);
+                  return groups.any(
+                          (g) => g['id'] == vm.currentGroupId);
                 }).toList();
 
                 return Column(
@@ -216,8 +235,9 @@ class GroupScreen extends StatelessWidget {
                       title: Text(name),
                       subtitle: Text("UID: $uid • Role: $userRole"),
                       trailing: vm.role == 'Owner' &&
-                          uid != FirebaseAuth
-                              .instance.currentUser!.uid
+                          uid !=
+                              FirebaseAuth
+                                  .instance.currentUser!.uid
                           ? PopupMenuButton<String>(
                         onSelected: (action) {
                           if (action == 'Promote') {
@@ -272,7 +292,8 @@ class GroupScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (_) => Padding(
-        padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
+        padding:
+        MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -306,7 +327,8 @@ class GroupScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (_) => Padding(
-        padding: MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
+        padding:
+        MediaQuery.of(context).viewInsets.add(const EdgeInsets.all(16)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
