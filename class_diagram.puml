@@ -1,0 +1,363 @@
+@startuml Flutter Food Tracking App Class Diagram
+
+!define LIGHTBLUE #E1F5FE
+!define LIGHTGREEN #E8F5E8
+!define LIGHTYELLOW #FFF9C4
+!define LIGHTPINK #FCE4EC
+!define LIGHTGRAY #F5F5F5
+
+package "Models" LIGHTBLUE {
+  class ItemModel {
+    - id: String
+    - name: String
+    - category: String
+    - description: String
+    - groupId: String
+    - batches: List<BatchModel>
+    + fromFirestore(DocumentSnapshot): ItemModel
+  }
+
+  class BatchModel {
+    - batchCode: String
+    - expiryDate: DateTime
+    - quantity: int
+    - status: String
+    + fromMap(Map<String, dynamic>): BatchModel
+  }
+
+  class NotificationModel {
+    - id: String
+    - message: String
+    - type: String
+    - groupId: String
+    - timestamp: DateTime
+    - isRead: bool
+    + fromMap(String, Map<String, dynamic>): NotificationModel
+  }
+
+  ItemModel ||--o{ BatchModel : contains
+}
+
+package "ViewModels" LIGHTGREEN {
+  abstract class ChangeNotifier {
+    + notifyListeners(): void
+  }
+
+  class ItemViewModel extends ChangeNotifier {
+    - nameCtrl: TextEditingController
+    - descCtrl: TextEditingController
+    - qtyCtrl: TextEditingController
+    - expiryDate: DateTime?
+    - groupId: String?
+    - isLoading: bool
+    - error: String?
+    - categories: List<String>
+    - selectedCategory: String
+    + setCategory(String): void
+    + setExpiryDate(DateTime): void
+    + incrementQty(): void
+    + decrementQty(): void
+    + addItem(BuildContext): Future<void>
+    + scanBarcode(BuildContext): Future<void>
+    + resetForm(): void
+  }
+
+  class GroupViewModel extends ChangeNotifier {
+    - currentGroupId: String?
+    - userGroups: List<Map<String, dynamic>>
+    - role: String
+    - loading: bool
+    + loadUserGroups(): Future<void>
+    + switchGroup(String): Future<void>
+    + createGroup(String, String): Future<void>
+    + joinGroup(String, BuildContext): Future<void>
+    + approveRequest(String): Future<void>
+    + deleteCurrentGroup(BuildContext): Future<void>
+    + leaveCurrentGroup(BuildContext): Future<void>
+  }
+
+  class InventoryViewModel extends ChangeNotifier {
+    - groupId: String?
+    - groupName: String
+    - selectedCategory: String
+    - searchQuery: String
+    - batchFilterStatus: String
+    - sortOption: String
+    - categories: List<String>
+    - sortOptions: List<String>
+    + init(): Future<void>
+    + updateTabIndex(int): void
+    + setSearchQuery(String): void
+    + setCategory(String): void
+    + setSort(String): void
+    + getExpiryWarning(DateTime): String
+    + getExpiryBucket(DateTime): String
+  }
+
+  class AuthViewModel extends ChangeNotifier {
+    - emailCtrl: TextEditingController
+    - passCtrl: TextEditingController
+    - nameCtrl: TextEditingController
+    - role: String
+    - isLoading: bool
+    - error: String?
+    + login(BuildContext): Future<void>
+    + register(BuildContext): Future<void>
+    + resetPassword(BuildContext): Future<void>
+    + setRole(String): void
+  }
+
+  class ProfileViewModel extends ChangeNotifier {
+    - nameCtrl: TextEditingController?
+    - email: String
+    - avatarFile: String
+    - loading: bool
+    - uid: String
+    + init(): Future<void>
+    + updateName(BuildContext): Future<void>
+    + updatePassword(BuildContext, String): Future<void>
+    + updateAvatar(String): Future<void>
+    + avatarPath: String?
+  }
+
+  class RecipeViewModel extends ChangeNotifier {
+    - allItems: List<String>
+    - selectedItems: List<String>
+    - loading: bool
+    - result: String?
+    + fetchInventory(): Future<void>
+    + generateRecipe(): Future<void>
+    + toggleSelectAll(bool): void
+    + toggleItem(String): void
+    + isItemSelected(String): bool
+    + isAllSelected(): bool
+  }
+
+  class AnalyticsViewModel extends ChangeNotifier {
+    - categoryCounts: Map<String, int>
+    - expiryTrend: List<Map<String, dynamic>>
+    - loading: bool
+    + loadAnalytics(): Future<void>
+  }
+
+  class NotificationsViewModel extends ChangeNotifier {
+    + notificationStream: Stream<List<NotificationModel>>
+    + markAsRead(String): Future<void>
+    + deleteNotification(String): Future<void>
+  }
+
+  class CalendarViewModel extends ChangeNotifier {
+    - groupId: String?
+    - focusedDay: DateTime
+    - selectedDay: DateTime?
+    - events: Map<DateTime, List<Map<String, dynamic>>>
+    + loadEvents(): Future<void>
+    + getEventsForDay(DateTime): List<Map<String, dynamic>>
+    + selectDay(DateTime, DateTime): void
+  }
+
+  class BarcodeViewModel extends ChangeNotifier {
+    - controller: MobileScannerController
+    - hasScanned: bool
+    - flashOn: bool
+    + toggleFlash(): void
+    + handleDetection(BarcodeCapture): String?
+    + disposeController(): void
+  }
+}
+
+package "Services" LIGHTYELLOW {
+  class ItemService {
+    + {static} addItemToFirestore(String, String, String, String, int, DateTime, String): Future<void>
+  }
+
+  class GroupService {
+    - uid: String
+    - usersRef: CollectionReference
+    - groupsRef: CollectionReference
+    + createGroup(String, String?): Future<void>
+    + joinGroup(String): Future<void>
+    + getUserGroups(): Future<List<Map<String, dynamic>>>
+    + getCurrentGroupId(): Future<String?>
+    + switchGroup(String): Future<void>
+    + getJoinRequests(String): Future<List<Map<String, dynamic>>>
+    + approveJoinRequest(String, String): Future<void>
+    + deleteGroup(String): Future<void>
+    + leaveGroup(String): Future<void>
+  }
+
+  class NotificationService {
+    + {static} sendNotification(String, String, String, String): Future<void>
+  }
+
+  class BarcodeService {
+    + {static} fetchItemNameFromBarcode(String): Future<String?>
+  }
+
+  class OpenRouterService {
+    - apiKey: String
+    + OpenRouterService(String)
+    + generateRecipe(List<String>): Future<String>
+  }
+}
+
+package "Screens" LIGHTPINK {
+  abstract class StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  abstract class StatefulWidget {
+    + createState(): State
+  }
+
+  class LoginScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  class RegisterScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  class HomeScreen extends StatefulWidget {
+    - currentIndex: int
+    - avatarFile: String?
+    - unreadCount: int
+    - pages: List<Widget>
+    - titles: List<String>
+    + createState(): State<HomeScreen>
+  }
+
+  class AddItemScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  class InventoryScreen extends StatefulWidget {
+    + createState(): State<InventoryScreen>
+  }
+
+  class GroupScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  class ProfileScreen extends StatefulWidget {
+    + createState(): State<ProfileScreen>
+  }
+
+  class RecipeGeneratorScreen extends StatefulWidget {
+    + createState(): State<RecipeGeneratorScreen>
+  }
+
+  class AnalyticsScreen extends StatefulWidget {
+    + createState(): State<AnalyticsScreen>
+  }
+
+  class CalendarScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  class BarcodeScanScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+
+  class NotificationsScreen extends StatelessWidget {
+    + build(BuildContext): Widget
+  }
+}
+
+package "Widgets" LIGHTGRAY {
+  class CustomButton extends StatelessWidget {
+    - text: String
+    - onPressed: VoidCallback?
+    - isLoading: bool
+    - type: ButtonType
+    - icon: IconData?
+    - backgroundColor: Color?
+    - textColor: Color?
+    - width: double?
+    + build(BuildContext): Widget
+  }
+
+  class CustomCard extends StatelessWidget {
+    - child: Widget
+    - padding: EdgeInsetsGeometry?
+    - margin: EdgeInsetsGeometry?
+    - color: Color?
+    - elevation: double?
+    - onTap: VoidCallback?
+    + build(BuildContext): Widget
+  }
+
+  class StatusChip extends StatelessWidget {
+    - label: String
+    - type: StatusType
+    - icon: IconData?
+    + build(BuildContext): Widget
+  }
+
+  enum ButtonType {
+    primary
+    secondary
+    text
+  }
+
+  enum StatusType {
+    success
+    warning
+    error
+    info
+    neutral
+  }
+}
+
+package "Theme" LIGHTGRAY {
+  class AppTheme {
+    + {static} primaryColor: Color
+    + {static} primaryLight: Color
+    + {static} primaryDark: Color
+    + {static} secondaryColor: Color
+    + {static} accentColor: Color
+    + {static} backgroundColor: Color
+    + {static} surfaceColor: Color
+    + {static} textPrimary: Color
+    + {static} textSecondary: Color
+    + {static} successColor: Color
+    + {static} warningColor: Color
+    + {static} errorColor: Color
+    + {static} lightTheme: ThemeData
+  }
+}
+
+' Relationships
+ItemViewModel --> ItemService : uses
+ItemViewModel --> BarcodeService : uses
+ItemViewModel --> NotificationService : uses
+
+GroupViewModel --> GroupService : uses
+
+RecipeViewModel --> OpenRouterService : uses
+
+NotificationsViewModel --> NotificationModel : manages
+
+LoginScreen --> AuthViewModel : consumes
+RegisterScreen --> AuthViewModel : consumes
+AddItemScreen --> ItemViewModel : consumes
+InventoryScreen --> InventoryViewModel : consumes
+GroupScreen --> GroupViewModel : consumes
+ProfileScreen --> ProfileViewModel : consumes
+RecipeGeneratorScreen --> RecipeViewModel : consumes
+AnalyticsScreen --> AnalyticsViewModel : consumes
+CalendarScreen --> CalendarViewModel : consumes
+BarcodeScanScreen --> BarcodeViewModel : consumes
+NotificationsScreen --> NotificationsViewModel : consumes
+
+HomeScreen --> "multiple" StatefulWidget : contains
+
+CustomButton --> ButtonType : uses
+StatusChip --> StatusType : uses
+
+note top of ItemModel : "Represents food items\nwith batch tracking"
+note top of GroupViewModel : "Manages user groups\nand permissions"
+note top of ItemService : "Handles Firestore\noperations for items"
+note top of OpenRouterService : "AI recipe generation\nusing OpenRouter API"
+
+@enduml
