@@ -6,36 +6,19 @@
 !define LIGHTPINK #FCE4EC
 !define LIGHTGRAY #F5F5F5
 
-package "Models" LIGHTBLUE {
-  class ItemModel {
-    - id: String
-    - name: String
-    - category: String
-    - description: String
-    - groupId: String
-    - batches: List<BatchModel>
-    + fromFirestore(DocumentSnapshot): ItemModel
+package "Data Layer" LIGHTBLUE {
+  class FirebaseFirestore {
+    + collection(String): CollectionReference
+    + doc(String): DocumentReference
+  }
+  
+  class FirebaseAuth {
+    + currentUser: User?
+    + signInWithEmailAndPassword(): Future<UserCredential>
+    + createUserWithEmailAndPassword(): Future<UserCredential>
   }
 
-  class BatchModel {
-    - batchCode: String
-    - expiryDate: DateTime
-    - quantity: int
-    - status: String
-    + fromMap(Map<String, dynamic>): BatchModel
-  }
-
-  class NotificationModel {
-    - id: String
-    - message: String
-    - type: String
-    - groupId: String
-    - timestamp: DateTime
-    - isRead: bool
-    + fromMap(String, Map<String, dynamic>): NotificationModel
-  }
-
-  ItemModel ||--o{ BatchModel : contains
+  note top of FirebaseFirestore : "Direct Firestore usage\ninstead of model classes"
 }
 
 package "ViewModels" LIGHTGREEN {
@@ -141,7 +124,7 @@ package "ViewModels" LIGHTGREEN {
   }
 
   class NotificationsViewModel extends ChangeNotifier {
-    + notificationStream: Stream<List<NotificationModel>>
+    + notificationStream: Stream<List<Map<String, dynamic>>>
     + markAsRead(String): Future<void>
     + deleteNotification(String): Future<void>
   }
@@ -331,12 +314,25 @@ package "Theme" LIGHTGRAY {
 ItemViewModel --> ItemService : uses
 ItemViewModel --> BarcodeService : uses
 ItemViewModel --> NotificationService : uses
+ItemViewModel --> FirebaseFirestore : queries directly
 
 GroupViewModel --> GroupService : uses
+GroupViewModel --> FirebaseFirestore : queries directly
+
+InventoryViewModel --> FirebaseFirestore : queries directly
+AuthViewModel --> FirebaseAuth : uses
+AuthViewModel --> FirebaseFirestore : uses
 
 RecipeViewModel --> OpenRouterService : uses
+RecipeViewModel --> FirebaseFirestore : queries directly
 
-NotificationsViewModel --> NotificationModel : manages
+AnalyticsViewModel --> FirebaseFirestore : queries directly
+CalendarViewModel --> FirebaseFirestore : queries directly
+NotificationsViewModel --> FirebaseFirestore : queries directly
+
+ItemService --> FirebaseFirestore : uses
+GroupService --> FirebaseFirestore : uses
+NotificationService --> FirebaseFirestore : uses
 
 LoginScreen --> AuthViewModel : consumes
 RegisterScreen --> AuthViewModel : consumes
@@ -355,9 +351,10 @@ HomeScreen --> "multiple" StatefulWidget : contains
 CustomButton --> ButtonType : uses
 StatusChip --> StatusType : uses
 
-note top of ItemModel : "Represents food items\nwith batch tracking"
+note top of FirebaseFirestore : "Most ViewModels work\ndirectly with Firestore\ndocuments as Map<String, dynamic>"
 note top of GroupViewModel : "Manages user groups\nand permissions"
 note top of ItemService : "Handles Firestore\noperations for items"
 note top of OpenRouterService : "AI recipe generation\nusing OpenRouter API"
+note top of NotificationsViewModel : "Works with raw Firestore data\ninstead of model classes"
 
 @enduml
